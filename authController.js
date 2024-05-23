@@ -57,59 +57,62 @@ export const register = async(req,res) =>{
     });
 }
 
-export const login = async(req,res) =>{
-    const {email,password} = req.body;
-//Validation
-     if(!email){
-         return res.status(400).json({error : true ,message : "Email is required"});
-      }
-      if(!password){
-         return res.status(400).json({error : true ,message : "Password is required"});
-      }
+export const login = async (req, res) => {
+    const { email, password } = req.body;
 
-//UserExisted
-    const userinfo = await authModel.findOne({ email : email });
-     if(!userinfo){
-        return res.status(400).json({message : "Email not found"});
-     }
+    try {
+        if (!email) {
+            return res.status(400).json({ error: true, message: "Email is required" });
+        }
+        if (!password) {
+            return res.status(400).json({ error: true, message: "Password is required" });
+        }
 
-//Password is valid
-     const isMatch = await bcrypt.compare(password,userinfo.password);
-     if(!isMatch){
-        return res.status(400).json({message : "Password not match"});
-     }
+        const userinfo = await authModel.findOne({ email });
+        if (!userinfo) {
+            return res.status(400).json({ message: "Email not found" });
+        }
 
-     //Generate the token
-   const token = jwt.sign({id : userinfo._id},"anyKey",{expiresIn : "30d"})
-     
-   //Send to respond
-      res.cookie('token', token, { httpOnly: true, secure: false, maxAge: 3600000 })
-      .json({
-        message : `Login successfully`,
-        token,
-       id:userinfo._id,
-       email:userinfo.email,
-       username:userinfo.username
-     })
-}
+        const isMatch = await bcrypt.compare(password, userinfo.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Password does not match" });
+        }
 
-export const logout = async (req, res) => {
-   res
-   .clearCookie('token', { httpOnly: true, secure: false })
-   .json({message : "Logout Successfully"});
+        const token = jwt.sign({ id: userinfo._id },"anyKey", { expiresIn: "30d" });
+
+        res.status(200).json({
+            message: "Login successfully",
+            token,
+            id: userinfo._id,
+            email: userinfo.email,
+            username: userinfo.username
+        });
+    } catch (error) {
+        res.status(500).json({ error: true, message: "Internal server error" });
+    }
 };
 
+
+export const logout = (req, res) => {
+    const token = req.headers["authorization"]?.split(' ')[1];
+        delete req.headers["authorization"]?.split(' ')[1];
+        res.send({ message: 'Logged out successfully' });
+        console.log(token);
+};
+
+
 export const profile = async (req, res) => {
-   try {
-      const user = await authModel.findById(req.user).select('-password');
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
-      res.json({ user });
-  } catch (error) {
-      res.status(500).json({ message: 'Server error' });
-  }
-}
+    try {
+        const user = await authModel.findById(req.user.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ user });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
  
 
 

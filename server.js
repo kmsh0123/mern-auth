@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import authRoute from "./routes/authRouter.js"
 import cors from "cors";
-import cookieParser from "cookie-parser";
+// import cookieParser from "cookie-parser";
 import errorHandler from "./utils/errorHandler.js";
 
 dotenv.config();
@@ -15,7 +15,7 @@ const DB = process.env.MONGO;
 app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({extended : false}))
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use(errorHandler);
 
 

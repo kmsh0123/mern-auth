@@ -1,29 +1,17 @@
 import jwt from "jsonwebtoken";
 
 export const isAuthenticated = async(req,res,next) =>{
-    //Get the token from the cookie
-    const token =  req.cookies.token
 
-    // Verify token
-    const verifyToken = jwt.verify(token,"anyKey",(err,decoded)=>{
-        if(err){
-            return false;
-        }else{
-            return decoded;
-        }
-    });
-    if(verifyToken){
-        req.user = verifyToken.id;
-        next();
-    }else{
-        return next(new Error("Not Logged In",401));
+    const token = req.headers["authorization"]?.split(' ')[1];
+
+    if (!token) {
+        return res.status(403).json({ message: 'A token is required for authentication' });
     }
-
-    // if(!token) return next(new errorHandler("Not Logged In",401));
-
-    // const decoded = jwt.verify(token,"anyKey");
-
-    // req.user = await authModel.findById(decoded._id);
-
-    // next();
+    try {
+        const decoded = jwt.verify(token,"anyKey");
+        req.user = decoded;
+    } catch (err) {
+        return res.status(401).json({ message: 'Invalid Token' });
+    }
+    return next();
 }
